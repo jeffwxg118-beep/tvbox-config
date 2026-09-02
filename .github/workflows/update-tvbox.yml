@@ -18,7 +18,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Select healthy TVBox source
         shell: bash
@@ -26,7 +26,7 @@ jobs:
           set -e
 
           A="https://raw.githubusercontent.com/xiaohui98/TvBox/main/tvbox.json"
-          B="https://raw.githubusercontent.com/kjxhb/tvbox/main/tvbox.json"
+          B="https://raw.githubusercontent.com/xiangcaiee/TVBoxjiekou/main/tvbox.json"
 
           check_source() {
             URL="$1"
@@ -48,13 +48,18 @@ jobs:
 
             SIZE=$(wc -c < "$FILE")
 
-            if [ "$SIZE" -lt 1000 ]; then
+            if [ "$SIZE" -lt 3000 ]; then
               echo "File too small: $SIZE bytes"
               return 1
             fi
 
             if ! grep -q '"sites"' "$FILE"; then
               echo "No sites field found"
+              return 1
+            fi
+
+            if grep -qi '<html' "$FILE"; then
+              echo "HTML error page detected"
               return 1
             fi
 
@@ -65,16 +70,16 @@ jobs:
           if check_source "$A" "/tmp/source.json"; then
             echo "Using source A"
             cp /tmp/source.json tvbox.json
-            echo "A" > active-source.txt
+            echo "A - xiaohui98" > active-source.txt
 
           elif check_source "$B" "/tmp/source.json"; then
             echo "Using source B"
             cp /tmp/source.json tvbox.json
-            echo "B" > active-source.txt
+            echo "B - xiangcaiee" > active-source.txt
 
           else
             echo "All sources failed."
-            echo "Keeping the existing tvbox.json unchanged."
+            echo "Keeping existing tvbox.json unchanged."
             exit 0
           fi
 
