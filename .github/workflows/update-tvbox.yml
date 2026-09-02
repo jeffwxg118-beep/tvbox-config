@@ -19,81 +19,29 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
-      - name: Select healthy TVBox source
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Update TVBox configuration
+        run: python scripts/update_tvbox.py
+
+      - name: Commit changes
         shell: bash
         run: |
-          set -e
-
-          A="https://raw.githubusercontent.com/xiaohui98/TvBox/main/tvbox.json"
-          B="https://raw.githubusercontent.com/xiangcaiee/TVBoxjiekou/main/tvbox.json"
-
-          check_source() {
-            URL="$1"
-            FILE="$2"
-
-            echo "Testing: $URL"
-
-            if ! curl -L \
-              --connect-timeout 15 \
-              --max-time 45 \
-              --retry 3 \
-              --retry-delay 3 \
-              --fail \
-              "$URL" \
-              -o "$FILE"; then
-              echo "Download failed"
-              return 1
-            fi
-
-            SIZE=$(wc -c < "$FILE")
-
-            if [ "$SIZE" -lt 3000 ]; then
-              echo "File too small: $SIZE bytes"
-              return 1
-            fi
-
-            if ! grep -q '"sites"' "$FILE"; then
-              echo "No sites field found"
-              return 1
-            fi
-
-            if grep -qi '<html' "$FILE"; then
-              echo "HTML error page detected"
-              return 1
-            fi
-
-            echo "Source OK: $SIZE bytes"
-            return 0
-          }
-
-          if check_source "$A" "/tmp/source.json"; then
-            echo "Using source A"
-            cp /tmp/source.json tvbox.json
-            echo "A - xiaohui98" > active-source.txt
-
-          elif check_source "$B" "/tmp/source.json"; then
-            echo "Using source B"
-            cp /tmp/source.json tvbox.json
-            echo "B - xiangcaiee" > active-source.txt
-
-          else
-            echo "All sources failed."
-            echo "Keeping existing tvbox.json unchanged."
-            exit 0
-          fi
-
-      - name: Commit updated config
-        shell: bash
-        run: |
-          if git diff --quiet -- tvbox.json active-source.txt; then
-            echo "No changes detected."
-            exit 0
-          fi
-
           git config user.name "tvbox-bot"
           git config user.email "tvbox-bot@users.noreply.github.com"
 
-          git add tvbox.json active-source.txt
-          git commit -m "Auto update TVBox config"
+          git add tvbox.json active-source.json last-known-good/tvbox.json
+
+          if git diff --cached --quiet; then
+            echo "No repository changes."
+            exit 0
+          fi
+
+          git commit -m "Auto update TVBox production config"
           git push
