@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": "primary",
+      "name": "主源",
+      "url": "https://raw.githubusercontent.com/xiaohui98/TvBox/main/tvbox.json",
+      "priority": 10,
+      "enabled": true
+    },
+    {
+      "id": "backup1",
+      "name": "备用源1",
+      "url": "https://raw.githubusercontent.com/xiangcaiee/TVBoxjiekou/main/tvbox.json",
+      "priority": 20,
+      "enabled": true
+    }
+  ]
+}
